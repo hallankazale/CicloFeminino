@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Luna">
+<meta name="theme-color" content="#110d1a">
+<meta name="description" content="Luna — Acompanhe seu ciclo menstrual, período fértil e saúde íntima">
+<title>Luna — Ciclo Feminino</title>
+
+<!-- PWA Manifest inline -->
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Luna%20%E2%80%94%20Ciclo%20Feminino%22%2C%22short_name%22%3A%22Luna%22%2C%22description%22%3A%22Acompanhe%20seu%20ciclo%20menstrual%20e%20sa%C3%BAde%20%C3%ADntima%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%23110d1a%22%2C%22theme_color%22%3A%22%23110d1a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%270%200%20512%20512%2527%253E%253Crect%2520width%3D%2527512%2527%2520height%3D%2527512%2527%2520rx%3D%2527100%2527%2520fill%3D%2527%2523110d1a%2527%2F%253E%253Ctext%2520x%3D%2527256%2527%2520y%3D%2527330%2527%2520font-size%3D%2527280%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%2599%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+<!-- Apple touch icon SVG inline -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23110d1a'/><text x='256' y='340' font-size='300' text-anchor='middle'>🌙</text></svg>">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   RESET & ROOT
+============================================================ */
+:root {
+  --bg: #110d1a;
+  --bg2: #1a1228;
+  --bg3: #221633;
+  --card: #1e1530;
+  --card2: #2a1d42;
+  --rose: #d4607f;
+  --rose-soft: #e8899f;
+  --rose-dim: rgba(212,96,127,0.15);
+  --lavender: #9b7fd4;
+  --lavender-soft: #c4b0e8;
+  --lavender-dim: rgba(155,127,212,0.15);
+  --mint: #6dd4b8;
+  --mint-dim: rgba(109,212,184,0.15);
+  --amber: #f0b84a;
+  --amber-dim: rgba(240,184,74,0.15);
+  --border: rgba(155,127,212,0.18);
+  --border2: rgba(255,255,255,0.06);
+  --text: #f0eaf8;
+  --text2: #c4b8d8;
+  --muted: #7a6e90;
+
+  /* Layout safe areas */
+  --header-h: 56px;
+  --bottom-nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* ============================================================
+   APP SHELL — fixed full-screen layout
+============================================================ */
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  /* respect notch */
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ---- TOP HEADER ---- */
+.app-header {
+  flex-shrink: 0;
+  height: var(--header-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  z-index: 50;
+}
+
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--rose-soft);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-name {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#install-btn {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  animation: pulse-btn 2s ease-in-out infinite;
+}
+#install-btn.visible { display: flex; }
+
+@keyframes pulse-btn {
+  0%,100% { box-shadow: 0 0 0 0 rgba(212,96,127,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(212,96,127,0); }
+}
+
+/* ---- SCROLLABLE CONTENT AREA ---- */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  position: relative;
+}
+
+/* ---- VIEWS ---- */
+.view {
+  display: none;
+  min-height: 100%;
+  padding: 16px 14px 20px;
+}
+.view.active { display: block; }
+
+/* ---- BOTTOM NAV ---- */
+.bottom-nav {
+  flex-shrink: 0;
+  height: var(--bottom-nav-h);
+  background: var(--bg2);
+  border-top: 1px solid var(--border2);
+  display: flex;
+  align-items: stretch;
+  z-index: 50;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  transition: color 0.15s;
+  padding: 6px 4px;
+  position: relative;
+}
+
+.nav-item .nav-icon { font-size: 20px; line-height: 1; }
+.nav-item .nav-label { font-size: 10px; }
+.nav-item.active { color: var(--rose-soft); }
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--rose);
+  border-radius: 0 0 3px 3px;
+}
+
+/* ============================================================
+   SETUP OVERLAY
+============================================================ */
+#setup-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.setup-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px 24px;
+  max-width: 400px; width: 100%;
+  text-align: center;
+}
+
+.setup-moon {
+  font-size: 52px;
+  display: block;
+  margin-bottom: 12px;
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.setup-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--rose-soft);
+  margin-bottom: 6px;
+}
+
+.setup-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.setup-field { margin-bottom: 16px; text-align: left; }
+
+.setup-field label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--lavender-soft);
+  margin-bottom: 7px;
+  font-weight: 500;
+}
+
+.setup-input, .setup-select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+.setup-input:focus, .setup-select:focus { border-color: var(--rose); }
+.setup-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a6e90' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.setup-select option { background: #221633; }
+
+.setup-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  color: white;
+  border: none;
+  border-radius: 13px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  margin-top: 8px;
+}
+
+/* ============================================================
+   SECTION HELPERS
+============================================================ */
+.section { margin-bottom: 18px; }
+
+.section-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.section-action {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--lavender-soft);
+  border-radius: 8px;
+  padding: 5px 11px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ============================================================
+   HOME — CYCLE HERO
+============================================================ */
+.cycle-hero {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cycle-hero::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,96,127,0.07), transparent 70%);
+  pointer-events: none;
+}
+
+.cycle-ring-wrap {
+  position: relative;
+  width: 110px; height: 110px;
+  flex-shrink: 0;
+}
+
+.cycle-svg { width: 110px; height: 110px; transform: rotate(-90deg); }
+.cycle-track { fill: none; stroke: var(--border); stroke-width: 7; }
+.cycle-fill { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke 0.5s; }
+
+.cycle-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+
+.cycle-day-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px; font-weight: 600; line-height: 1;
+}
+
+.cycle-day-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted); margin-top: 2px;
+}
+
+.cycle-info { flex: 1; min-width: 0; }
+
+.cycle-phase-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.cycle-phase-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600; line-height: 1.15;
+  margin-bottom: 5px;
+}
+
+.cycle-phase-desc {
+  font-size: 12px; color: var(--text2);
+  line-height: 1.5; margin-bottom: 10px;
+}
+
+.cycle-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 11px; color: var(--text2);
+}
+
+/* ============================================================
+   STATS ROW
+============================================================ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.stat-card .s-icon { font-size: 22px; flex-shrink: 0; }
+.stat-card .s-info {}
+.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; line-height: 1; }
+.stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+/* ============================================================
+   TIMELINE EVENTS
+============================================================ */
+.timeline {
+  display: flex; gap: 8px;
+  overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.timeline::-webkit-scrollbar { display: none; }
+
+.timeline-pill {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 130px; flex-shrink: 0;
+}
+.tl-icon { font-size: 18px; margin-bottom: 5px; }
+.tl-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 2px; }
+.tl-date { font-size: 13px; font-weight: 600; margin-bottom: 1px; }
+.tl-days { font-size: 11px; color: var(--rose-soft); }
+
+/* ============================================================
+   TODAY LOG PREVIEW
+============================================================ */
+.today-preview {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   PHASE GUIDE CARDS
+============================================================ */
+.phase-guide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.phase-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 12px;
+}
+.phase-card-icon { font-size: 18px; margin-bottom: 6px; }
+.phase-card-name { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.phase-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+/* ============================================================
+   CALENDAR
+============================================================ */
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cal-nav-btn {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); width: 36px; height: 36px;
+  border-radius: 10px; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.cal-month-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 600;
+}
+
+.cal-legend {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 10px;
+}
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+.cal-grid {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); background: var(--bg3); border-bottom: 1px solid var(--border2); }
+.cal-wd { text-align: center; padding: 8px 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+.cal-days { display: grid; grid-template-columns: repeat(7,1fr); }
+
+.cal-day {
+  padding: 5px 3px;
+  min-height: 58px;
+  border-right: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  cursor: pointer;
+  position: relative;
+}
+.cal-day:nth-child(7n) { border-right: none; }
+.cal-day.other-month { opacity: 0.28; pointer-events: none; }
+
+.day-num {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500;
+  margin-bottom: 3px;
+  border-radius: 50%;
+}
+.cal-day.today .day-num { background: var(--rose); color: white; font-weight: 700; }
+
+.day-bar { height: 3px; border-radius: 2px; margin-bottom: 3px; }
+.bar-menstrual { background: var(--rose); }
+.bar-folicula { background: var(--lavender); }
+.bar-ovulacao { background: var(--mint); }
+.bar-lutea { background: var(--amber); }
+
+.day-dots { display: flex; gap: 2px; flex-wrap: wrap; }
+.day-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* ============================================================
+   LOG MODAL (bottom sheet on mobile)
+============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+  padding: 0 0 calc(20px + var(--safe-bottom));
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 16px;
+}
+
+.modal-inner { padding: 0 16px 16px; }
+
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600;
+  margin-bottom: 2px;
+}
+.modal-date-label { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+
+.modal-section { margin-bottom: 18px; }
+.modal-section-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--lavender-soft); margin-bottom: 8px; font-weight: 500;
+}
+
+.chip-select { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-opt {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.chip-opt.sel { background: var(--rose); border-color: var(--rose); color: white; }
+.chip-opt.sel.mood { background: var(--lavender); border-color: var(--lavender); }
+.chip-opt.sel.sex { background: var(--mint); border-color: transparent; color: var(--bg); }
+
+.modal-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 13px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  width: 100px;
+  -webkit-appearance: none;
+}
+.modal-input:focus { border-color: var(--rose); }
+
+.modal-textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 11px 13px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  resize: none; outline: none; line-height: 1.5;
+}
+.modal-textarea:focus { border-color: var(--rose); }
+
+.modal-btns { display: flex; gap: 8px; margin-top: 20px; }
+.btn-primary {
+  flex: 1;
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  color: white; border: none; border-radius: 12px;
+  padding: 14px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.btn-ghost {
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); border-radius: 12px;
+  padding: 14px 18px; font-size: 14px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+
+/* ============================================================
+   HISTÓRICO
+============================================================ */
+.history-month {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.history-month-hdr {
+  padding: 13px 14px;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer;
+}
+.month-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; }
+.history-month-body { display: none; }
+.history-month-body.open { display: block; }
+
+.log-item {
+  display: flex; gap: 10px; padding: 10px 14px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 13px;
+}
+.log-item:last-child { border-bottom: none; }
+.log-date { min-width: 44px; color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace; padding-top: 1px; }
+.log-content { flex: 1; }
+.log-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.log-tag { font-size: 10px; padding: 2px 7px; border-radius: 5px; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.log-edit-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px; }
+
+/* ============================================================
+   INSIGHTS
+============================================================ */
+.insights-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 16px;
+}
+.insight-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px;
+}
+.insight-icon { font-size: 22px; margin-bottom: 6px; }
+.insight-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; }
+.insight-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--rose-soft); margin-bottom: 2px; }
+.insight-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+.symptom-chart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.symptom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.symptom-name { min-width: 90px; font-size: 11px; color: var(--text2); }
+.symptom-bar-bg { flex: 1; height: 7px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.symptom-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--rose), var(--lavender)); }
+.symptom-count { font-size: 11px; color: var(--muted); min-width: 16px; text-align: right; }
+
+/* ============================================================
+   CONFIG
+============================================================ */
+.settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.settings-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border2); }
+.settings-row:last-child { border-bottom: none; }
+.settings-row label { font-size: 13px; color: var(--text2); }
+.settings-input {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 11px;
+  color: var(--text); font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none; width: 90px; text-align: center;
+  -webkit-appearance: none;
+}
+.settings-input:focus { border-color: var(--rose); }
+
+/* ============================================================
+   TOAST
+============================================================ */
+#toast {
+  position: fixed; bottom: calc(var(--bottom-nav-h) + 14px + var(--safe-bottom));
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 10px 18px;
+  font-size: 13px; color: var(--text);
+  z-index: 999; opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================
+   SCROLLBAR
+============================================================ */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Color helpers */
+.c-rose { color: var(--rose-soft); }
+.c-mint { color: var(--mint); }
+.c-amber { color: var(--amber); }
+.c-lavender { color: var(--lavender-soft); }
+.c-muted { color: var(--muted); }
+
+
+/* ============================================================
+   MOBILE POLISH — celular centralizado e abas organizadas
+============================================================ */
+body {
+  min-height: 100dvh;
+}
+
+#app {
+  max-width: 520px;
+  margin: 0 auto;
+  left: 50%;
+  right: auto;
+  width: 100%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 40px rgba(0,0,0,0.25);
+}
+
+.app-content {
+  padding-bottom: 4px;
+}
+
+.bottom-nav {
+  padding-bottom: max(0px, var(--safe-bottom));
+  height: calc(var(--bottom-nav-h) + var(--safe-bottom));
+}
+
+.nav-item {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nav-item .nav-label {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.install-card, .notify-card {
+  background: linear-gradient(135deg, rgba(212,96,127,.16), rgba(155,127,212,.14));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.install-card-title, .notify-card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.install-card-text, .notify-card-text {
+  color: var(--text2);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.small-help {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+@media (max-width: 390px) {
+  :root { --header-h: 54px; --bottom-nav-h: 62px; }
+  .app-header { padding: 0 12px; }
+  .logo { font-size: 22px; }
+  .header-name { display:none; }
+  #install-btn { padding: 6px 10px; font-size: 11px; }
+  .view { padding: 12px 10px 18px; }
+  .cycle-hero { gap: 12px; padding: 16px 12px; }
+  .cycle-ring-wrap, .cycle-svg { width: 96px; height: 96px; }
+  .cycle-svg { view-transition-name: none; }
+  .cycle-day-num { font-size: 27px; }
+  .cycle-phase-title { font-size: 18px; }
+  .cycle-phase-desc { font-size: 11px; }
+  .stats-row, .insights-grid, .phase-guide { gap: 8px; }
+  .stat-card { padding: 12px 9px; }
+  .stat-val { font-size: 18px; }
+  .nav-item .nav-icon { font-size: 19px; }
+  .nav-item .nav-label { font-size: 9px; }
+  .cal-day { min-height: 52px; padding: 4px 2px; }
+}
+
+@media (min-width: 700px) {
+  #app { border-left: 1px solid var(--border2); border-right: 1px solid var(--border2); }
+}
+
+</style>
+</head>
+<body>
+
+<!-- SETUP OVERLAY -->
+<div id="setup-overlay">
+  <div class="setup-card">
+    <span class="setup-moon">🌙</span>
+    <div class="setup-title">Bem-vinda ao Luna</div>
+    <div class="setup-sub">Seu app de saúde íntima feminina.<br>Vamos configurar seu ciclo.</div>
+
+    <div class="setup-field">
+      <label>Seu nome (opcional)</label>
+      <input class="setup-input" id="setup-name" placeholder="Como te chamo?" maxlength="30">
+    </div>
+    <div class="setup-field">
+      <label>Início da última menstruação</label>
+      <input class="setup-input" type="date" id="setup-last-period">
+    </div>
+    <div class="setup-field">
+      <label>Duração do ciclo</label>
+      <select class="setup-select" id="setup-cycle-len">
+        <option value="21">21 dias</option><option value="22">22 dias</option><option value="23">23 dias</option>
+        <option value="24">24 dias</option><option value="25">25 dias</option><option value="26">26 dias</option>
+        <option value="27">27 dias</option><option value="28" selected>28 dias (média)</option>
+        <option value="29">29 dias</option><option value="30">30 dias</option><option value="31">31 dias</option>
+        <option value="32">32 dias</option><option value="33">33 dias</option><option value="34">34 dias</option>
+        <option value="35">35 dias</option>
+      </select>
+    </div>
+    <div class="setup-field">
+      <label>Duração da menstruação</label>
+      <select class="setup-select" id="setup-period-len">
+        <option value="3">3 dias</option><option value="4">4 dias</option>
+        <option value="5" selected>5 dias</option><option value="6">6 dias</option>
+        <option value="7">7 dias</option><option value="8">8 dias</option>
+      </select>
+    </div>
+    <button class="setup-btn" onclick="initApp()">Começar →</button>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app" style="display:none;">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">🌙 Luna</div>
+    <div class="header-right">
+      <div class="header-name" id="header-name"></div>
+      <button id="install-btn" onclick="installPWA()">⬇ Instalar app</button>
+    </div>
+  </header>
+
+  <!-- Scrollable content -->
+  <div class="app-content" id="app-content">
+
+    <!-- VIEW: INÍCIO -->
+    <div class="view active" id="view-inicio">
+
+      <div class="install-card" id="home-install-card" style="display:none;">
+        <div class="install-card-title">📲 Instalar no celular</div>
+        <div class="install-card-text">Abra como app, com tela cheia e atalho na tela inicial.</div>
+        <button class="btn-primary" onclick="installPWA()" style="width:100%;padding:12px;">Instalar agora</button>
+        <div class="small-help" id="install-help-home"></div>
+      </div>
+
+      <div class="notify-card" id="home-notify-card" style="display:none;">
+        <div class="notify-card-title">🔔 Notificações do ciclo</div>
+        <div class="notify-card-text">Receba lembretes quando a menstruação, período fértil ou ovulação estiverem próximos.</div>
+        <button class="btn-primary" onclick="enableNotifications()" style="width:100%;padding:12px;">Ativar notificações</button>
+      </div>
+
+      <div class="cycle-hero">
+        <div class="cycle-ring-wrap">
+          <svg class="cycle-svg" viewBox="0 0 110 110">
+            <circle class="cycle-track" cx="55" cy="55" r="46"/>
+            <circle class="cycle-fill" id="cycle-arc" cx="55" cy="55" r="46" stroke-dasharray="289" stroke-dashoffset="289"/>
+          </svg>
+          <div class="cycle-center">
+            <div class="cycle-day-num" id="hero-day">—</div>
+            <div class="cycle-day-label">Dia</div>
+          </div>
+        </div>
+        <div class="cycle-info">
+          <div class="cycle-phase-badge" id="phase-badge">—</div>
+          <div class="cycle-phase-title" id="phase-title">Calculando...</div>
+          <div class="cycle-phase-desc" id="phase-desc"></div>
+          <div class="cycle-chips" id="phase-chips"></div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="s-icon">🩸</div>
+          <div class="s-info">
+            <div class="stat-val c-rose" id="stat-next-period">—</div>
+            <div class="stat-lbl">Próx. menstr.</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="s-icon">🌿</div>
+          <div class="s-info">
+            <div class="stat-val c-mint" id="stat-fertile">—</div>
+            <div class="stat-lbl">Período fértil</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="s-icon">✨</div>
+          <div class="s-info">
+            <div class="stat-val c-amber" id="stat-ovulation">—</div>
+            <div class="stat-lbl">Ovulação</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="s-icon">📅</div>
+          <div class="s-info">
+            <div class="stat-val" id="stat-cycle-len">—</div>
+            <div class="stat-lbl">Ciclo médio</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-hdr">
+          <div class="section-title">📍 Próximos eventos</div>
+        </div>
+        <div class="timeline" id="timeline-events"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-hdr">
+          <div class="section-title">📝 Hoje</div>
+          <button class="section-action" onclick="openLog()">+ Registrar</button>
+        </div>
+        <div class="today-preview" id="today-preview">
+          Toque em <strong style="color:var(--rose-soft)">+ Registrar</strong> para anotar seus sintomas de hoje.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" style="margin-bottom:10px;">🌕 Fases do ciclo</div>
+        <div class="phase-guide">
+          <div class="phase-card">
+            <div class="phase-card-icon">🩸</div>
+            <div class="phase-card-name" style="color:var(--rose-soft);">Menstrual</div>
+            <div class="phase-card-desc">Dias 1–5 · Renovação. Cólicas e fadiga são normais.</div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-card-icon">🌱</div>
+            <div class="phase-card-name" style="color:var(--lavender-soft);">Folicular</div>
+            <div class="phase-card-desc">Dias 6–13 · Energia crescendo, estrogênio em alta.</div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-card-icon">🌟</div>
+            <div class="phase-card-name" style="color:var(--mint);">Ovulação</div>
+            <div class="phase-card-desc">~Dia 14 · Pico fértil. Muco elástico e transparente.</div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-card-icon">🍂</div>
+            <div class="phase-card-name" style="color:var(--amber);">Lútea</div>
+            <div class="phase-card-desc">Dias 15–28 · TPM pode aparecer. Autocuidado!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: CALENDÁRIO -->
+    <div class="view" id="view-calendario">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <div class="cal-month-title" id="cal-month-title"></div>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:var(--rose)"></div>Menstr.</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--lavender)"></div>Folicular</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--mint)"></div>Fértil/Ovul.</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Lútea</div>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-weekdays">
+          <div class="cal-wd">D</div><div class="cal-wd">S</div><div class="cal-wd">T</div>
+          <div class="cal-wd">Q</div><div class="cal-wd">Q</div><div class="cal-wd">S</div><div class="cal-wd">S</div>
+        </div>
+        <div class="cal-days" id="cal-days"></div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">Toque em qualquer dia para registrar</div>
+    </div>
+
+    <!-- VIEW: HISTÓRICO -->
+    <div class="view" id="view-historico">
+      <div class="section-hdr" style="margin-bottom:14px;">
+        <div class="section-title">📖 Histórico</div>
+      </div>
+      <div id="historico-container">
+        <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Nenhum registro ainda.</div>
+      </div>
+    </div>
+
+    <!-- VIEW: INSIGHTS -->
+    <div class="view" id="view-insights">
+      <div class="section-hdr" style="margin-bottom:14px;">
+        <div class="section-title">💜 Insights</div>
+      </div>
+      <div class="insights-grid" id="insights-grid"></div>
+      <div class="section-title" style="margin-bottom:10px;font-size:16px;">📊 Sintomas frequentes</div>
+      <div class="symptom-chart" id="symptom-chart">
+        <div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">Registre mais dados para ver padrões.</div>
+      </div>
+    </div>
+
+    <!-- VIEW: CONFIG -->
+    <div class="view" id="view-config">
+      <div class="section-hdr" style="margin-bottom:14px;">
+        <div class="section-title">⚙️ Configurações</div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">🌙 Meu ciclo</div>
+        <div class="settings-row">
+          <label>Nome</label>
+          <input class="settings-input" id="cfg-name" placeholder="Seu nome" style="width:130px;text-align:left;">
+        </div>
+        <div class="settings-row">
+          <label>Duração do ciclo</label>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <input class="settings-input" type="number" id="cfg-cycle" min="21" max="45" value="28">
+            <span style="font-size:11px;color:var(--muted);">dias</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label>Duração menstr.</label>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <input class="settings-input" type="number" id="cfg-period" min="2" max="10" value="5">
+            <span style="font-size:11px;color:var(--muted);">dias</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label>Última menstruação</label>
+          <input class="settings-input" type="date" id="cfg-last-period" style="width:140px;">
+        </div>
+        <div style="margin-top:14px;">
+          <button class="btn-primary" onclick="saveSettings()" style="width:100%;">Salvar</button>
+        </div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">🔔 Notificações</div>
+        <div class="settings-row">
+          <label>Lembretes do ciclo</label>
+          <button class="btn-ghost" id="notify-toggle" onclick="toggleNotifications()" style="font-size:12px;padding:8px 12px;">Ativar</button>
+        </div>
+        <div class="small-help" id="notify-status">As notificações aparecem quando o app estiver instalado/aberto e o navegador permitir.</div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-title">📲 Instalar app</div>
+        <div class="small-help" style="margin-bottom:10px;">Para colocar no GitHub: envie este arquivo como <strong>index.html</strong> no repositório e ative o GitHub Pages.</div>
+        <button class="btn-primary" onclick="installPWA()" style="width:100%;">Instalar no celular</button>
+        <div class="small-help" id="install-help-config"></div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-title">🗑️ Dados</div>
+        <div class="settings-row">
+          <label style="font-size:12px;color:var(--muted);">Apagar todos os registros</label>
+          <button class="btn-ghost" onclick="clearLogs()" style="font-size:12px;padding:7px 12px;border-color:rgba(212,96,127,0.3);color:var(--rose);">Limpar</button>
+        </div>
+      </div>
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--muted);line-height:1.6;">
+        Luna — Dados salvos apenas no seu dispositivo<br>Sem login · Sem nuvem · 100% privado
+      </div>
+    </div>
+
+  </div><!-- /app-content -->
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-inicio" onclick="showTab('inicio',this)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Início</span>
+    </button>
+    <button class="nav-item" id="nav-calendario" onclick="showTab('calendario',this)">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Calendário</span>
+    </button>
+    <button class="nav-item" id="nav-historico" onclick="showTab('historico',this)">
+      <span class="nav-icon">📖</span>
+      <span class="nav-label">Histórico</span>
+    </button>
+    <button class="nav-item" id="nav-insights" onclick="showTab('insights',this)">
+      <span class="nav-icon">💜</span>
+      <span class="nav-label">Insights</span>
+    </button>
+    <button class="nav-item" id="nav-config" onclick="showTab('config',this)">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Config</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- LOG MODAL (bottom sheet) -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-inner">
+      <div class="modal-title" id="modal-title">📝 Registrar Dia</div>
+      <div class="modal-date-label" id="modal-date-label">—</div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">🩸 Fluxo menstrual</div>
+        <div class="chip-select">
+          <div class="chip-opt" data-group="flow" data-val="nenhum" onclick="toggleChip(this)">Nenhum</div>
+          <div class="chip-opt" data-group="flow" data-val="leve" onclick="toggleChip(this)">Leve</div>
+          <div class="chip-opt" data-group="flow" data-val="moderado" onclick="toggleChip(this)">Moderado</div>
+          <div class="chip-opt" data-group="flow" data-val="intenso" onclick="toggleChip(this)">Intenso</div>
+          <div class="chip-opt" data-group="flow" data-val="muito_intenso" onclick="toggleChip(this)">Muito intenso</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">😊 Humor</div>
+        <div class="chip-select">
+          <div class="chip-opt mood" data-group="mood" data-val="feliz" onclick="toggleChip(this)">😄 Feliz</div>
+          <div class="chip-opt mood" data-group="mood" data-val="calma" onclick="toggleChip(this)">😌 Calma</div>
+          <div class="chip-opt mood" data-group="mood" data-val="ansiosa" onclick="toggleChip(this)">😰 Ansiosa</div>
+          <div class="chip-opt mood" data-group="mood" data-val="irritada" onclick="toggleChip(this)">😤 Irritada</div>
+          <div class="chip-opt mood" data-group="mood" data-val="triste" onclick="toggleChip(this)">😢 Triste</div>
+          <div class="chip-opt mood" data-group="mood" data-val="sensivel" onclick="toggleChip(this)">🥺 Sensível</div>
+          <div class="chip-opt mood" data-group="mood" data-val="energica" onclick="toggleChip(this)">⚡ Enérgica</div>
+          <div class="chip-opt mood" data-group="mood" data-val="cansada" onclick="toggleChip(this)">😴 Cansada</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">🤒 Sintomas físicos</div>
+        <div class="chip-select">
+          <div class="chip-opt" data-group="symptoms" data-val="colica" onclick="toggleChip(this)">Cólica</div>
+          <div class="chip-opt" data-group="symptoms" data-val="dor_cabeca" onclick="toggleChip(this)">Dor de cabeça</div>
+          <div class="chip-opt" data-group="symptoms" data-val="inchaco" onclick="toggleChip(this)">Inchaço</div>
+          <div class="chip-opt" data-group="symptoms" data-val="acne" onclick="toggleChip(this)">Acne</div>
+          <div class="chip-opt" data-group="symptoms" data-val="sensib_seio" onclick="toggleChip(this)">Sensib. seios</div>
+          <div class="chip-opt" data-group="symptoms" data-val="dor_lombar" onclick="toggleChip(this)">Dor lombar</div>
+          <div class="chip-opt" data-group="symptoms" data-val="nausea" onclick="toggleChip(this)">Náusea</div>
+          <div class="chip-opt" data-group="symptoms" data-val="insonia" onclick="toggleChip(this)">Insônia</div>
+          <div class="chip-opt" data-group="symptoms" data-val="fadiga" onclick="toggleChip(this)">Fadiga</div>
+          <div class="chip-opt" data-group="symptoms" data-val="libido_alta" onclick="toggleChip(this)">Libido alta</div>
+          <div class="chip-opt" data-group="symptoms" data-val="libido_baixa" onclick="toggleChip(this)">Libido baixa</div>
+          <div class="chip-opt" data-group="symptoms" data-val="corrimento" onclick="toggleChip(this)">Corrimento</div>
+          <div class="chip-opt" data-group="symptoms" data-val="cefalia" onclick="toggleChip(this)">Enxaqueca</div>
+          <div class="chip-opt" data-group="symptoms" data-val="desejo" onclick="toggleChip(this)">Desejos (comida)</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">🌡️ Temperatura basal (°C)</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input class="modal-input" type="number" id="modal-temp" placeholder="36.5" step="0.1" min="35" max="40">
+          <span style="font-size:11px;color:var(--muted);">Medir ao acordar</span>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">💕 Atividade sexual</div>
+        <div class="chip-select">
+          <div class="chip-opt sex" data-group="sex" data-val="protegida" onclick="toggleChip(this)">Com proteção</div>
+          <div class="chip-opt sex" data-group="sex" data-val="desprotegida" onclick="toggleChip(this)">Sem proteção</div>
+          <div class="chip-opt sex" data-group="sex" data-val="nenhuma" onclick="toggleChip(this)">Nenhuma</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">💧 Muco cervical</div>
+        <div class="chip-select">
+          <div class="chip-opt" data-group="cervical" data-val="seco" onclick="toggleChip(this)">Seco</div>
+          <div class="chip-opt" data-group="cervical" data-val="cremoso" onclick="toggleChip(this)">Cremoso</div>
+          <div class="chip-opt" data-group="cervical" data-val="aquoso" onclick="toggleChip(this)">Aquoso</div>
+          <div class="chip-opt" data-group="cervical" data-val="elastico" onclick="toggleChip(this)">🌿 Elástico (fértil)</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">📓 Notas</div>
+        <textarea class="modal-textarea" id="modal-notes" rows="3" placeholder="Como foi seu dia? Anote o que quiser..."></textarea>
+      </div>
+
+      <div class="modal-btns">
+        <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveLog()">Salvar registro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✓ Salvo!</div>
+
+<script>
+// ============================================================
+// PWA — Install + Notifications
+// ============================================================
+let deferredInstallPrompt = null;
+
+// Register SW inline via blob. No GitHub Pages, use HTTPS para funcionar melhor.
+const swCode = `
+const CACHE_NAME = 'luna-cache-v3';
+self.addEventListener('install', event => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME));
+});
+self.addEventListener('activate', event => {
+  event.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', event => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+  }
+});
+`;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    try {
+      const swBlob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swUrl).catch(() => {});
+    } catch (err) {}
+  });
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  refreshInstallUI();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  refreshInstallUI();
+  showToast('App instalado! 🎉');
+});
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function refreshInstallUI() {
+  const btn = document.getElementById('install-btn');
+  const homeCard = document.getElementById('home-install-card');
+  const helpHome = document.getElementById('install-help-home');
+  const helpCfg = document.getElementById('install-help-config');
+  const installed = isStandaloneMode();
+
+  if (btn) btn.classList.toggle('visible', !!deferredInstallPrompt && !installed);
+  if (homeCard) homeCard.style.display = installed ? 'none' : 'block';
+
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const help = installed ? 'App já está em modo instalado.' : (deferredInstallPrompt
+    ? 'Toque em instalar e confirme no navegador.'
+    : (isiOS ? 'No iPhone: toque em Compartilhar e depois em “Adicionar à Tela de Início”.' : 'No Chrome/Android: menu ⋮ e “Adicionar à tela inicial”, se o botão não aparecer.'));
+
+  if (helpHome) helpHome.textContent = help;
+  if (helpCfg) helpCfg.textContent = help;
+}
+
+function installPWA() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(c => {
+      if (c.outcome === 'accepted') showToast('Instalação iniciada! 📲');
+      deferredInstallPrompt = null;
+      refreshInstallUI();
+    });
+  } else {
+    refreshInstallUI();
+    showToast('Use o menu do navegador para adicionar à tela inicial.');
+  }
+}
+
+function notificationsEnabled() {
+  return localStorage.getItem('luna_notifications') === 'on';
+}
+
+async function enableNotifications() {
+  if (!('Notification' in window)) {
+    showToast('Seu navegador não suporta notificações.');
+    return;
+  }
+  let permission = Notification.permission;
+  if (permission !== 'granted') permission = await Notification.requestPermission();
+  if (permission === 'granted') {
+    localStorage.setItem('luna_notifications', 'on');
+    showToast('Notificações ativadas! 🔔');
+    sendCycleNotifications(true);
+  } else {
+    localStorage.setItem('luna_notifications', 'off');
+    showToast('Notificação não permitida pelo navegador.');
+  }
+  refreshNotificationUI();
+}
+
+function disableNotifications() {
+  localStorage.setItem('luna_notifications', 'off');
+  refreshNotificationUI();
+  showToast('Notificações desativadas.');
+}
+
+function toggleNotifications() {
+  if (notificationsEnabled()) disableNotifications();
+  else enableNotifications();
+}
+
+function refreshNotificationUI() {
+  const btn = document.getElementById('notify-toggle');
+  const status = document.getElementById('notify-status');
+  const homeCard = document.getElementById('home-notify-card');
+  const supported = 'Notification' in window;
+  const on = notificationsEnabled() && supported && Notification.permission === 'granted';
+  if (btn) {
+    btn.textContent = on ? 'Desativar' : 'Ativar';
+    btn.style.color = on ? 'var(--mint)' : 'var(--text2)';
+  }
+  if (status) {
+    status.textContent = !supported ? 'Este navegador não suporta notificações.' : (on ? 'Ativado. O app avisa quando houver eventos próximos do ciclo.' : 'Desativado. Toque em ativar para permitir lembretes.');
+  }
+  if (homeCard) homeCard.style.display = on ? 'none' : 'block';
+}
+
+function notifyUser(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try { new Notification(title, { body, icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || undefined, badge: document.querySelector('link[rel="apple-touch-icon"]')?.href || undefined }); }
+  catch (e) { showToast(title + ' — ' + body); }
+}
+
+function sendCycleNotifications(force=false) {
+  if (!notificationsEnabled() || !('Notification' in window) || Notification.permission !== 'granted' || !appData?.lastPeriod) return;
+  const todayKey = toKey(new Date());
+  const already = localStorage.getItem('luna_notify_last') === todayKey;
+  if (already && !force) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cd = getCycle(today);
+  const nextPeriod = daysUntil(cd.nextPeriod);
+  const ovulation = daysUntil(cd.ovulationDate);
+  const fertile = daysUntil(cd.fertileStartDate);
+
+  if (force) {
+    notifyUser('Luna ativado 🌙', 'Seus lembretes do ciclo estão funcionando neste celular.');
+  } else if (nextPeriod >= 0 && nextPeriod <= 2) {
+    notifyUser('Lembrete Luna 🩸', nextPeriod === 0 ? 'Sua menstruação está prevista para hoje.' : `Sua menstruação está prevista em ${nextPeriod} dia(s).`);
+  } else if (fertile >= 0 && fertile <= 1) {
+    notifyUser('Período fértil 🌿', fertile === 0 ? 'Seu período fértil começa hoje.' : 'Seu período fértil começa amanhã.');
+  } else if (ovulation === 0) {
+    notifyUser('Ovulação ✨', 'Sua ovulação está prevista para hoje.');
+  }
+  localStorage.setItem('luna_notify_last', todayKey);
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let appData = { name:'', lastPeriod:null, cycleLen:28, periodLen:5, logs:{} };
+let calViewDate = new Date();
+let modalDate = null;
+let currentTab = 'inicio';
+
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('setup-last-period').value = today;
+  refreshInstallUI();
+  refreshNotificationUI();
+
+  const saved = localStorage.getItem('luna_v2');
+  if (saved) {
+    try { appData = JSON.parse(saved); launchApp(); return; } catch {}
+  }
+  // show setup
+});
+
+function initApp() {
+  const lp = document.getElementById('setup-last-period').value;
+  if (!lp) { showToast('Informe a data da última menstruação'); return; }
+  appData = {
+    name: document.getElementById('setup-name').value.trim(),
+    lastPeriod: lp,
+    cycleLen: parseInt(document.getElementById('setup-cycle-len').value),
+    periodLen: parseInt(document.getElementById('setup-period-len').value),
+    logs: {}
+  };
+  save();
+  launchApp();
+}
+
+function launchApp() {
+  document.getElementById('setup-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateHeaderName();
+  refreshInstallUI();
+  refreshNotificationUI();
+  sendCycleNotifications();
+  renderInicio();
+  renderCalendar();
+}
+
+function save() { localStorage.setItem('luna_v2', JSON.stringify(appData)); }
+
+// ============================================================
+// CYCLE MATH
+// ============================================================
+function parseDate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y,m-1,d); }
+function toKey(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
+function addDays(d,n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function daysBetween(a,b) { return Math.round((b-a)/86400000); }
+function daysUntil(d) { const t=new Date(); t.setHours(0,0,0,0); const x=new Date(d); x.setHours(0,0,0,0); return daysBetween(t,x); }
+
+function getCycle(refDate) {
+  const last = parseDate(appData.lastPeriod);
+  const cl = appData.cycleLen, pl = appData.periodLen;
+  let cs = new Date(last);
+  while (addDays(cs,cl) <= refDate) cs = addDays(cs,cl);
+  const doc = daysBetween(cs,refDate)+1;
+  const ovDay = Math.round(cl-14);
+  const fertStart = ovDay-5, fertEnd = ovDay+1;
+  let phase;
+  if (doc<=pl) phase='menstrual';
+  else if (doc<=ovDay-2) phase='folicula';
+  else if (doc<=ovDay+1) phase='ovulacao';
+  else phase='lutea';
+  const isFertile = doc>=fertStart && doc<=fertEnd;
+  return {
+    doc, phase, isFertile,
+    nextPeriod: addDays(cs,cl),
+    ovulationDate: addDays(cs,ovDay-1),
+    fertileStartDate: addDays(cs,fertStart-1),
+    fertileEndDate: addDays(cs,fertEnd-1),
+    cs, cl, pl
+  };
+}
+
+function getPhaseForDate(date) {
+  try { return getCycle(date); } catch { return {phase:null,isFertile:false}; }
+}
+
+function fmtDate(d) { return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); }
+
+// ============================================================
+// RENDER HOME
+// ============================================================
+const PHASE_INFO = {
+  menstrual: { label:'🩸 Menstrual', title:'Fase Menstrual', desc:'Seu corpo se renova. Cólicas e fadiga são normais. Descanse e cuide-se.', chips:['🛁 Repouso','💊 Analgésico se preciso','☕ Evite cafeína','🧘 Meditação'], bg:'var(--rose-dim)', color:'var(--rose-soft)', arc:'var(--rose)' },
+  folicula: { label:'🌱 Folicular', title:'Fase Folicular', desc:'Estrogênio subindo! Energia e criatividade em alta. Ótimo para novos projetos.', chips:['⚡ Energia alta','🏋️ Exercícios','🎨 Criatividade','😄 Bom humor'], bg:'var(--lavender-dim)', color:'var(--lavender-soft)', arc:'var(--lavender)' },
+  ovulacao: { label:'✨ Ovulação', title:'Período Fértil', desc:'Pico de fertilidade! Alta energia e libido. Maior chance de gravidez agora.', chips:['🌺 Alta fertilidade','💧 Muco elástico','🌡️ Temp. sobe','💃 Libido alta'], bg:'var(--mint-dim)', color:'var(--mint)', arc:'var(--mint)' },
+  lutea: { label:'🍂 Lútea', title:'Fase Lútea', desc:'Progesterona em alta. TPM pode aparecer nos últimos dias. Autocuidado é essencial.', chips:['🧘 Autocuidado','🥗 Coma bem','😴 Durma mais','💜 Seja gentil consigo'], bg:'var(--amber-dim)', color:'var(--amber)', arc:'var(--amber)' }
+};
+
+function renderInicio() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cd = getCycle(today);
+  const pi = PHASE_INFO[cd.phase];
+
+  // Ring
+  const circ = 2*Math.PI*46;
+  const arc = document.getElementById('cycle-arc');
+  arc.style.strokeDashoffset = circ*(1-cd.doc/cd.cl);
+  arc.style.stroke = pi.arc;
+  const dn = document.getElementById('hero-day');
+  dn.textContent = cd.doc;
+  dn.style.color = pi.arc;
+
+  // Phase
+  const badge = document.getElementById('phase-badge');
+  badge.textContent = pi.label;
+  badge.style.background = pi.bg;
+  badge.style.color = pi.color;
+  document.getElementById('phase-title').textContent = pi.title;
+  document.getElementById('phase-desc').textContent = pi.desc;
+  document.getElementById('phase-chips').innerHTML = pi.chips.map(c=>`<div class="chip">${c}</div>`).join('');
+
+  // Stats
+  const dn2p = daysUntil(cd.nextPeriod);
+  const dn2o = daysUntil(cd.ovulationDate);
+  const dn2f = daysUntil(cd.fertileStartDate);
+  document.getElementById('stat-next-period').textContent = dn2p===0?'Hoje':dn2p<0?'Em andamento':`${dn2p}d`;
+  document.getElementById('stat-fertile').textContent = cd.isFertile?'Agora!':(dn2f<=0?'Passou':`${dn2f}d`);
+  document.getElementById('stat-ovulation').textContent = dn2o===0?'Hoje!':dn2o<0?`${Math.abs(dn2o)}d atrás`:`${dn2o}d`;
+  document.getElementById('stat-cycle-len').textContent = `${cd.cl}d`;
+
+  // Timeline
+  const events = [
+    {icon:'🩸',label:'Próx. menstr.',date:cd.nextPeriod},
+    {icon:'🌿',label:'Fértil inicia',date:cd.fertileStartDate},
+    {icon:'✨',label:'Ovulação',date:cd.ovulationDate},
+    {icon:'🌿',label:'Fértil termina',date:cd.fertileEndDate},
+  ];
+  document.getElementById('timeline-events').innerHTML = events.map(ev=>{
+    const d=daysUntil(ev.date);
+    return `<div class="timeline-pill">
+      <div class="tl-icon">${ev.icon}</div>
+      <div class="tl-label">${ev.label}</div>
+      <div class="tl-date">${fmtDate(ev.date)}</div>
+      <div class="tl-days">${d===0?'Hoje':d<0?`${Math.abs(d)}d atrás`:`daqui ${d}d`}</div>
+    </div>`;
+  }).join('');
+
+  // Today preview
+  const key = toKey(today);
+  const log = appData.logs[key];
+  renderTodayPreview(log, key);
+  refreshInstallUI();
+  refreshNotificationUI();
+}
+
+function renderTodayPreview(log, key) {
+  const el = document.getElementById('today-preview');
+  if (!log) {
+    el.innerHTML = `Toque em <button onclick="openLogDate('${key}')" style="background:none;border:none;color:var(--rose-soft);cursor:pointer;font-weight:600;font-size:13px;padding:0;">+ Registrar</button> para anotar seus sintomas de hoje.`;
+    return;
+  }
+  let parts = [];
+  if (log.flow && log.flow!=='nenhum') parts.push(`🩸 ${log.flow}`);
+  if (log.mood?.length) parts.push(`😊 ${log.mood.join(', ')}`);
+  if (log.symptoms?.length) parts.push(`🤒 ${log.symptoms.slice(0,3).join(', ')}`);
+  if (log.temp) parts.push(`🌡️ ${log.temp}°C`);
+  if (log.notes) parts.push(`📓 "${log.notes.substring(0,50)}${log.notes.length>50?'...':''}"`);
+  el.innerHTML = `<div style="color:var(--text2);line-height:1.7;">${parts.join(' · ') || 'Registro salvo.'}</div>
+    <button onclick="openLogDate('${key}')" style="background:none;border:none;color:var(--lavender-soft);cursor:pointer;font-size:11px;margin-top:8px;">✏️ Editar</button>`;
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function renderCalendar() {
+  const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+  document.getElementById('cal-month-title').textContent = `${MONTHS[m]} ${y}`;
+  const firstDay = new Date(y,m,1), lastDay = new Date(y,m+1,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const grid = document.getElementById('cal-days');
+  grid.innerHTML = '';
+  const startDow = firstDay.getDay();
+  for (let i=0;i<startDow;i++) grid.appendChild(makeDayCell(addDays(firstDay,-(startDow-i)),true));
+  for (let i=1;i<=lastDay.getDate();i++) grid.appendChild(makeDayCell(new Date(y,m,i),false));
+  const rem = 7-((startDow+lastDay.getDate())%7);
+  if(rem<7) for(let i=1;i<=rem;i++) grid.appendChild(makeDayCell(new Date(y,m+1,i),true));
+}
+
+function makeDayCell(date, otherMonth) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const key = toKey(date);
+  const log = appData.logs[key];
+  const {phase, isFertile} = getPhaseForDate(date);
+  const barMap = {menstrual:'bar-menstrual',folicula:'bar-folicula',ovulacao:'bar-ovulacao',lutea:'bar-lutea'};
+
+  const cell = document.createElement('div');
+  cell.className = 'cal-day'+(otherMonth?' other-month':'')+(date.getTime()===today.getTime()?' today':'');
+  if (!otherMonth) cell.onclick = () => openLogDate(key);
+
+  let dotsHtml = '';
+  if (log) {
+    if (log.flow && log.flow!=='nenhum') dotsHtml += `<div class="day-dot" style="background:var(--rose)"></div>`;
+    if (log.mood?.length) dotsHtml += `<div class="day-dot" style="background:var(--lavender)"></div>`;
+    if (log.symptoms?.length) dotsHtml += `<div class="day-dot" style="background:var(--amber)"></div>`;
+    if (log.sex && log.sex!=='nenhuma') dotsHtml += `<div class="day-dot" style="background:var(--mint)"></div>`;
+  }
+  if (isFertile && !otherMonth && !['menstrual','ovulacao'].includes(phase)) dotsHtml += `<div class="day-dot" style="background:var(--mint);opacity:0.6"></div>`;
+
+  cell.innerHTML = `
+    <div class="day-num">${date.getDate()}</div>
+    ${phase&&!otherMonth?`<div class="day-bar ${barMap[phase]}"></div>`:''}
+    <div class="day-dots">${dotsHtml}</div>`;
+  return cell;
+}
+
+function calPrev() { calViewDate.setMonth(calViewDate.getMonth()-1); renderCalendar(); }
+function calNext() { calViewDate.setMonth(calViewDate.getMonth()+1); renderCalendar(); }
+
+// ============================================================
+// LOG MODAL
+// ============================================================
+function openLog() { openLogDate(toKey(new Date())); }
+
+function openLogDate(key) {
+  modalDate = key;
+  const [y,m,d] = key.split('-').map(Number);
+  const date = new Date(y,m-1,d);
+  document.getElementById('modal-date-label').textContent = date.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('modal-title').textContent = '📝 ' + date.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  // Reset
+  document.querySelectorAll('.chip-opt').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('modal-notes').value='';
+  document.getElementById('modal-temp').value='';
+  // Load
+  const log = appData.logs[key];
+  if (log) {
+    if (log.flow) { const e=document.querySelector(`.chip-opt[data-group="flow"][data-val="${log.flow}"]`); if(e) e.classList.add('sel'); }
+    ['mood','symptoms'].forEach(g=>{ if(log[g]) log[g].forEach(v=>{ const e=document.querySelector(`.chip-opt[data-group="${g}"][data-val="${v}"]`); if(e) e.classList.add('sel'); }); });
+    ['sex','cervical'].forEach(g=>{ if(log[g]){ const e=document.querySelector(`.chip-opt[data-group="${g}"][data-val="${log[g]}"]`); if(e) e.classList.add('sel'); } });
+    if (log.temp) document.getElementById('modal-temp').value=log.temp;
+    if (log.notes) document.getElementById('modal-notes').value=log.notes;
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+  // scroll to top
+  document.getElementById('modal-sheet').scrollTop=0;
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); modalDate=null; }
+
+function toggleChip(el) {
+  const g = el.dataset.group;
+  if (['mood','symptoms'].includes(g)) { el.classList.toggle('sel'); }
+  else { document.querySelectorAll(`.chip-opt[data-group="${g}"]`).forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+}
+
+function saveLog() {
+  if (!modalDate) return;
+  appData.logs[modalDate] = {
+    flow: document.querySelector('.chip-opt[data-group="flow"].sel')?.dataset.val||null,
+    mood: [...document.querySelectorAll('.chip-opt[data-group="mood"].sel')].map(e=>e.dataset.val),
+    symptoms: [...document.querySelectorAll('.chip-opt[data-group="symptoms"].sel')].map(e=>e.dataset.val),
+    sex: document.querySelector('.chip-opt[data-group="sex"].sel')?.dataset.val||null,
+    cervical: document.querySelector('.chip-opt[data-group="cervical"].sel')?.dataset.val||null,
+    temp: document.getElementById('modal-temp').value||null,
+    notes: document.getElementById('modal-notes').value.trim()||null,
+    ts: Date.now()
+  };
+  save();
+  closeModal();
+  showToast('Registro salvo! 💜');
+  renderCalendar();
+  if (currentTab==='inicio') renderInicio();
+  if (currentTab==='historico') renderHistorico();
+  if (currentTab==='insights') renderInsights();
+}
+
+document.getElementById('modal-overlay').addEventListener('click', e=>{ if(e.target===document.getElementById('modal-overlay')) closeModal(); });
+
+// ============================================================
+// HISTÓRICO
+// ============================================================
+function renderHistorico() {
+  const logs = appData.logs;
+  const keys = Object.keys(logs).sort().reverse();
+  if (!keys.length) { document.getElementById('historico-container').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Nenhum registro ainda.</div>'; return; }
+  const byMonth = {};
+  keys.forEach(k=>{ const [y,m]=k.split('-'); const mk=`${y}-${m}`; if(!byMonth[mk]) byMonth[mk]=[]; byMonth[mk].push(k); });
+  let html='';
+  for (const [mk,mkeys] of Object.entries(byMonth).sort().reverse()) {
+    const [y,m]=mk.split('-');
+    const mname=`${MONTHS[parseInt(m)-1]} ${y}`;
+    const rows=mkeys.map(k=>{
+      const log=logs[k]; const [,,d]=k.split('-');
+      const date=new Date(parseInt(y),parseInt(m)-1,parseInt(d));
+      const dow=date.toLocaleDateString('pt-BR',{weekday:'short'});
+      let tags=[];
+      if(log.flow&&log.flow!=='nenhum') tags.push(`🩸 ${log.flow}`);
+      if(log.mood?.length) tags.push(...log.mood.map(v=>`😊 ${v}`));
+      if(log.symptoms?.length) tags.push(...log.symptoms.map(v=>`🤒 ${v.replace(/_/g,' ')}`));
+      if(log.sex&&log.sex!=='nenhuma') tags.push(`💕 ${log.sex}`);
+      if(log.temp) tags.push(`🌡️ ${log.temp}°C`);
+      return `<div class="log-item">
+        <div class="log-date">${d}/${m}<br><span>${dow}</span></div>
+        <div class="log-content">
+          ${log.notes?`<div style="color:var(--text2);font-size:12px;margin-bottom:3px;">"${log.notes.substring(0,60)}"</div>`:''}
+          <div class="log-tags">${tags.map(t=>`<div class="log-tag">${t}</div>`).join('')}</div>
+        </div>
+        <button class="log-edit-btn" onclick="openLogDate('${k}')">✏️</button>
+      </div>`;
+    }).join('');
+    html+=`<div class="history-month">
+      <div class="history-month-hdr" onclick="toggleMonth(this)">
+        <div class="month-name">${mname}</div>
+        <div style="font-size:11px;color:var(--muted);">${mkeys.length} reg. ▾</div>
+      </div>
+      <div class="history-month-body open">${rows}</div>
+    </div>`;
+  }
+  document.getElementById('historico-container').innerHTML=html;
+}
+
+function toggleMonth(hdr) { hdr.nextElementSibling.classList.toggle('open'); }
+
+// ============================================================
+// INSIGHTS
+// ============================================================
+function renderInsights() {
+  const logs=appData.logs, keys=Object.keys(logs);
+  const moodCount={}, symCount={};
+  let flowDays=0, withSex=0;
+  keys.forEach(k=>{ const l=logs[k]; l.mood?.forEach(m=>{moodCount[m]=(moodCount[m]||0)+1;}); l.symptoms?.forEach(s=>{symCount[s]=(symCount[s]||0)+1;}); if(l.flow&&l.flow!=='nenhum') flowDays++; if(l.sex&&l.sex!=='nenhuma') withSex++; });
+  const topMood=Object.entries(moodCount).sort((a,b)=>b[1]-a[1])[0];
+  const topSym=Object.entries(symCount).sort((a,b)=>b[1]-a[1])[0];
+  const moodEmojis={feliz:'😄',calma:'😌',ansiosa:'😰',irritada:'😤',triste:'😢',sensivel:'🥺',energica:'⚡',cansada:'😴'};
+  document.getElementById('insights-grid').innerHTML=`
+    <div class="insight-card"><div class="insight-icon">📅</div><div class="insight-title">Duração do ciclo</div><div class="insight-val">${appData.cycleLen}d</div><div class="insight-desc">Configurado por você</div></div>
+    <div class="insight-card"><div class="insight-icon">📝</div><div class="insight-title">Registros</div><div class="insight-val">${keys.length}</div><div class="insight-desc">Dias anotados no app</div></div>
+    <div class="insight-card"><div class="insight-icon">🩸</div><div class="insight-title">Dias de fluxo</div><div class="insight-val">${flowDays}</div><div class="insight-desc">Com menstruação registrada</div></div>
+    <div class="insight-card"><div class="insight-icon">${topMood?moodEmojis[topMood[0]]||'💜':'—'}</div><div class="insight-title">Humor frequente</div><div class="insight-val" style="font-size:16px;">${topMood?topMood[0]:'—'}</div><div class="insight-desc">${topMood?`${topMood[1]}x registrado`:'Registre seu humor!'}</div></div>
+    <div class="insight-card"><div class="insight-icon">🤒</div><div class="insight-title">Sintoma comum</div><div class="insight-val" style="font-size:14px;">${topSym?topSym[0].replace(/_/g,' '):'—'}</div><div class="insight-desc">${topSym?`${topSym[1]}x nos registros`:''}</div></div>
+    <div class="insight-card"><div class="insight-icon">💕</div><div class="insight-title">Ativ. sexual</div><div class="insight-val">${withSex}</div><div class="insight-desc">Dias registrados</div></div>`;
+  const topSyms=Object.entries(symCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if (topSyms.length) {
+    const max=topSyms[0][1];
+    document.getElementById('symptom-chart').innerHTML=topSyms.map(([s,c])=>
+      `<div class="symptom-row"><div class="symptom-name">${s.replace(/_/g,' ')}</div><div class="symptom-bar-bg"><div class="symptom-bar-fill" style="width:${(c/max*100).toFixed(0)}%"></div></div><div class="symptom-count">${c}</div></div>`
+    ).join('');
+  }
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function loadConfig() {
+  document.getElementById('cfg-name').value=appData.name||'';
+  document.getElementById('cfg-cycle').value=appData.cycleLen;
+  document.getElementById('cfg-period').value=appData.periodLen;
+  document.getElementById('cfg-last-period').value=appData.lastPeriod||'';
+}
+
+function saveSettings() {
+  appData.name=document.getElementById('cfg-name').value.trim();
+  appData.cycleLen=parseInt(document.getElementById('cfg-cycle').value)||28;
+  appData.periodLen=parseInt(document.getElementById('cfg-period').value)||5;
+  const lp=document.getElementById('cfg-last-period').value;
+  if(lp) appData.lastPeriod=lp;
+  save();
+  updateHeaderName();
+  renderInicio();
+  renderCalendar();
+  showToast('Configurações salvas! 💜');
+}
+
+function clearLogs() {
+  if(confirm('Apagar todos os registros permanentemente?')) {
+    appData.logs={};save();
+    renderInicio();renderCalendar();renderHistorico();renderInsights();
+    showToast('Registros apagados.');
+  }
+}
+
+function updateHeaderName() {
+  const el=document.getElementById('header-name');
+  el.textContent=appData.name?`🌙 ${appData.name}`:'';
+}
+
+// ============================================================
+// NAV
+// ============================================================
+function showTab(id, btn) {
+  currentTab=id;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  btn.classList.add('active');
+  // scroll content to top
+  document.getElementById('app-content').scrollTop=0;
+  if(id==='calendario') renderCalendar();
+  if(id==='historico') renderHistorico();
+  if(id==='insights') renderInsights();
+  if(id==='config') { loadConfig(); refreshInstallUI(); refreshNotificationUI(); }
+  if(id==='inicio') renderInicio();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
