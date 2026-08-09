@@ -1,0 +1,8 @@
+{
+  "appId": "br.com.ciclofeminino.luna",
+  "appName": "Luna",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
