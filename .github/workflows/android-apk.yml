@@ -90,7 +90,6 @@ jobs:
           </vector>
           EOF
 
-          # Android status-bar notification icons must be monochrome/transparent.
           cat > "$RES/drawable/luna_notification.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -98,10 +97,7 @@ jobs:
               android:height="24dp"
               android:viewportWidth="24"
               android:viewportHeight="24">
-              <path
-                  android:fillColor="#FFFFFFFF"
-                  android:fillType="evenOdd"
-                  android:pathData="M10.8,2.2A9.8,9.8 0,1 0,20.8 15.6A8,8 0,1 1,10.8 2.2Z" />
+              <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M10.8,2.2A9.8,9.8 0,1 0,20.8 15.6A8,8 0,1 1,10.8 2.2Z" />
           </vector>
           EOF
 
@@ -126,13 +122,12 @@ jobs:
             sed -i 's#<application #<application android:roundIcon="@mipmap/ic_launcher_round" #' "$MANIFEST"
           fi
 
-          # Required at runtime on Android 13+; requestPermissions() handles the prompt.
           if ! grep -q 'android.permission.POST_NOTIFICATIONS' "$MANIFEST"; then
             sed -i '/<application/i\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
           fi
 
-          sed -i 's/versionCode [0-9][0-9]*/versionCode 5/' android/app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.1.1"/' android/app/build.gradle
+          sed -i 's/versionCode [0-9][0-9]*/versionCode 6/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.2.0"/' android/app/build.gradle
 
           test -s "$RES/drawable/luna_notification.xml"
           grep -q 'android.permission.POST_NOTIFICATIONS' "$MANIFEST"
@@ -142,19 +137,19 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew clean assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.1.1.apk
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.2.0.apk
 
       - name: Verify final APK exists
         run: |
           set -euo pipefail
-          APK=android/app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.1.1.apk
+          APK=android/app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.2.0.apk
           test -s "$APK"
           echo "APK generated successfully: $(stat -c%s "$APK") bytes"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Luna-Ciclo-Feminino-v1.1.1-NATIVE-NOTIFICATIONS
-          path: android/app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.1.1.apk
+          name: Luna-Ciclo-Feminino-v1.2.0-REDESIGN
+          path: android/app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.2.0.apk
           if-no-files-found: error
           retention-days: 14
