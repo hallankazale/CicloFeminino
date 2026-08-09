@@ -1,0 +1,135 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - apk-capacitor
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Prepare web assets
+        run: npm run prepare:web
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Create native Luna vector icon
+        run: |
+          set -euo pipefail
+          RES=android/app/src/main/res
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+
+          mkdir -p "$RES/mipmap-anydpi" "$RES/mipmap-anydpi-v26" "$RES/drawable" "$RES/values"
+          find "$RES" -type f \( -name 'ic_launcher*' -o -name 'ic_launcher_round*' -o -name 'ic_launcher_foreground*' -o -name 'ic_launcher_background*' \) -delete
+
+          cat > "$RES/mipmap-anydpi/ic_launcher.xml" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#6D4167" android:pathData="M0,0H108V108H0Z" />
+              <path android:fillColor="#FFF8FC" android:fillType="evenOdd" android:pathData="M52,20A32,32 0,1 0,52 84A32,32 0,1 0,52 20ZM66,20A27,27 0,1 0,66 74A27,27 0,1 0,66 20Z" />
+              <path android:fillColor="#F5A0BD" android:pathData="M78,67C78,67 89,80 89,87C89,94 84,99 77,99C70,99 65,94 65,87C65,80 78,67 78,67Z" />
+          </vector>
+          EOF
+          cp "$RES/mipmap-anydpi/ic_launcher.xml" "$RES/mipmap-anydpi/ic_launcher_round.xml"
+
+          cat > "$RES/drawable/luna_foreground.xml" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#FFF8FC" android:fillType="evenOdd" android:pathData="M48,25A28,28 0,1 0,48 81A28,28 0,1 0,48 25ZM61,25A23,23 0,1 0,61 71A23,23 0,1 0,61 25Z" />
+              <path android:fillColor="#F5A0BD" android:pathData="M75,65C75,65 84,76 84,82C84,88 80,92 74,92C68,92 64,88 64,82C64,76 75,65 75,65Z" />
+          </vector>
+          EOF
+
+          cat > "$RES/values/luna_icon_colors.xml" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources><color name="luna_icon_background">#6D4167</color></resources>
+          EOF
+
+          cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/luna_icon_background" />
+              <foreground android:drawable="@drawable/luna_foreground" />
+          </adaptive-icon>
+          EOF
+          cp "$RES/mipmap-anydpi-v26/ic_launcher.xml" "$RES/mipmap-anydpi-v26/ic_launcher_round.xml"
+
+          sed -i 's#android:icon="[^"]*"#android:icon="@mipmap/ic_launcher"#' "$MANIFEST"
+          if grep -q 'android:roundIcon=' "$MANIFEST"; then
+            sed -i 's#android:roundIcon="[^"]*"#android:roundIcon="@mipmap/ic_launcher_round"#' "$MANIFEST"
+          else
+            sed -i 's#<application #<application android:roundIcon="@mipmap/ic_launcher_round" #' "$MANIFEST"
+          fi
+
+          sed -i 's/versionCode [0-9][0-9]*/versionCode 3/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.0.3"/' android/app/build.gradle
+
+          grep -q 'android:icon="@mipmap/ic_launcher"' "$MANIFEST"
+          grep -q 'android:roundIcon="@mipmap/ic_launcher_round"' "$MANIFEST"
+          grep -q 'luna_foreground' "$RES/mipmap-anydpi-v26/ic_launcher.xml"
+          grep -q '#6D4167' "$RES/mipmap-anydpi/ic_launcher.xml"
+          grep -q '#F5A0BD' "$RES/mipmap-anydpi/ic_launcher.xml"
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.0.3.apk
+
+      - name: Verify final APK exists
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.0.3.apk
+          test -s "$APK"
+          echo "APK generated successfully: $(stat -c%s "$APK") bytes"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Luna-Ciclo-Feminino-v1.0.3-VECTOR-ICON
+          path: android/app/build/outputs/apk/debug/Luna-Ciclo-Feminino-v1.0.3.apk
+          if-no-files-found: error
+          retention-days: 14
