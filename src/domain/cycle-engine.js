@@ -12,15 +12,26 @@
     return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
   }
 
+  /**
+   * Aceita YYYY-MM-DD e objetos Date inclusive vindos de outro JS realm (vm/WebView).
+   * Evita instanceof Date porque ele falha entre contexts diferentes.
+   */
   function parseLocalDate(value) {
-    if (value instanceof Date) {
+    const isDateLike = Object.prototype.toString.call(value) === '[object Date]';
+    if (isDateLike) {
+      if (Number.isNaN(value.getTime())) throw new TypeError('Data inválida');
       return new Date(value.getFullYear(), value.getMonth(), value.getDate());
     }
+
     if (typeof value !== 'string') throw new TypeError('Data inválida');
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     if (!match) throw new TypeError('Use datas no formato YYYY-MM-DD');
-    const [, y, m, d] = match.map(Number);
+
+    const y = Number(match[1]);
+    const m = Number(match[2]);
+    const d = Number(match[3]);
     const date = new Date(y, m - 1, d);
+
     if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
       throw new RangeError('Data inexistente');
     }
@@ -49,7 +60,7 @@
 
   function median(numbers) {
     if (!numbers.length) return null;
-    const sorted = [...numbers].sort((a, b) => a - b);
+    const sorted = Array.from(numbers, Number).sort((a, b) => a - b);
     const middle = Math.floor(sorted.length / 2);
     return sorted.length % 2 ? sorted[middle] : Math.round((sorted[middle - 1] + sorted[middle]) / 2);
   }
@@ -58,10 +69,6 @@
     return Boolean(log && log.flow && log.flow !== 'nenhum');
   }
 
-  /**
-   * Detecta o primeiro dia de cada sequência menstrual registrada.
-   * Registros isolados são aceitos; dias consecutivos pertencem ao mesmo período.
-   */
   function detectPeriodStarts(logs = {}) {
     const bleedingDays = Object.entries(logs)
       .filter(([, log]) => hasBleeding(log))
@@ -83,7 +90,7 @@
     if (periodStarts.length < 2) return clamp(fallbackCycleLength, 21, 45, 28);
     const intervals = [];
     for (let i = 1; i < periodStarts.length; i += 1) {
-      const diff = daysBetween(parseLocalDate(periodStarts[i - 1]), parseLocalDate(periodStarts[i]));
+      const diff = daysBetween(periodStarts[i - 1], periodStarts[i]);
       if (diff >= 15 && diff <= 60) intervals.push(diff);
     }
     const estimated = median(intervals);
@@ -103,10 +110,6 @@
     return 'baixa';
   }
 
-  /**
-   * Calcula a posição do dia dentro do ciclo para datas no passado ou futuro.
-   * A previsão é estimativa e não deve ser usada como método contraceptivo.
-   */
   function calculateCycle(config, refDate = new Date()) {
     if (!config || !config.lastPeriod) throw new TypeError('Última menstruação é obrigatória');
 
