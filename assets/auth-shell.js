@@ -1,9 +1,10 @@
-/* Luna splash/auth shell. Online auth activates when window.LUNA_AUTH_ADAPTER is configured. */
+/* Luna splash/auth shell. Uses window.LUNA_AUTH_ADAPTER when online auth is available. */
 (function () {
   'use strict';
 
   const ICON = '<svg viewBox="0 0 108 108" aria-hidden="true"><path fill="#FFF8FC" fill-rule="evenodd" d="M48 25a28 28 0 1 0 0 56 28 28 0 1 0 0-56Zm13 0a23 23 0 1 0 0 46 23 23 0 1 0 0-46Z"/><path fill="#F5A0BD" d="M75 65s9 11 9 17c0 6-4 10-10 10s-10-4-10-10c0-6 11-17 11-17Z"/></svg>';
   const SESSION_KEY = 'luna_local_session';
+  const BACKEND_MIGRATION_KEY = 'luna_backend_auth_v1_seen';
 
   function createSplash() {
     const splash = document.createElement('div');
@@ -32,9 +33,9 @@
           <button id="luna-auth-submit" class="luna-auth-submit" type="submit">Entrar</button>
         </form>
         <div class="luna-auth-links"><button type="button" class="luna-auth-link" id="luna-forgot-btn">Esqueci minha senha</button><span></span></div>
-        <button type="button" id="luna-local-btn" class="luna-local-btn">Continuar neste aparelho</button>
+        <button type="button" id="luna-local-btn" class="luna-local-btn">Continuar sem conta neste aparelho</button>
       </div>
-      <div class="luna-auth-note">Seus dados de saúde são privados. O modo local mantém os registros somente neste aparelho.</div>
+      <div class="luna-auth-note">Dados sincronizados usam uma conta exclusiva do Luna. No modo local, os registros permanecem somente neste aparelho.</div>
     </div>`;
   }
 
@@ -50,17 +51,26 @@
 
   function showAuth() { document.getElementById('luna-auth')?.classList.add('is-visible'); }
   function hideAuth() { document.getElementById('luna-auth')?.classList.remove('is-visible'); }
-  function setError(message) {
+  function setError(message, success = false) {
     const box = document.getElementById('luna-auth-error');
     if (!box) return;
     box.textContent = message || '';
     box.classList.toggle('show', Boolean(message));
+    box.classList.toggle('success', Boolean(message) && success);
   }
 
   async function runAdapter(method, payload) {
     const adapter = window.LUNA_AUTH_ADAPTER;
-    if (!adapter || typeof adapter[method] !== 'function') throw new Error('O login online do Luna ainda não foi conectado ao servidor. Use “Continuar neste aparelho” por enquanto.');
+    if (!adapter || typeof adapter[method] !== 'function') throw new Error('O login online do Luna não está disponível nesta versão.');
     return adapter[method](payload);
+  }
+
+  async function finishOnlineLogin(method, payload) {
+    const result = await runAdapter(method, payload);
+    localStorage.removeItem(SESSION_KEY);
+    hideAuth();
+    window.dispatchEvent(new CustomEvent('luna:authenticated', { detail: { method } }));
+    return result;
   }
 
   function wireAuth(auth) {
@@ -90,17 +100,22 @@
 
     auth.querySelector('#luna-google-btn').addEventListener('click', async () => {
       setError('');
-      try { await runAdapter('signInWithGoogle'); hideAuth(); } catch (error) { setError(error?.message || 'Não foi possível entrar com Google.'); }
+      try { await finishOnlineLogin('signInWithGoogle'); }
+      catch (error) { setError(error?.message || 'Não foi possível entrar com Google.'); }
     });
 
     auth.querySelector('#luna-forgot-btn').addEventListener('click', async () => {
       const email = auth.querySelector('#luna-auth-email').value.trim();
       if (!email) return setError('Digite seu e-mail para recuperar a senha.');
-      try { await runAdapter('resetPassword', { email }); setError('Enviamos as instruções de recuperação para seu e-mail.'); } catch (error) { setError(error?.message || 'Não foi possível recuperar a senha.'); }
+      try {
+        await runAdapter('resetPassword', { email });
+        setError('Enviamos as instruções de recuperação para seu e-mail.', true);
+      } catch (error) { setError(error?.message || 'Não foi possível recuperar a senha.'); }
     });
 
     auth.querySelector('#luna-auth-form').addEventListener('submit', async event => {
-      event.preventDefault(); setError('');
+      event.preventDefault();
+      setError('');
       const email = auth.querySelector('#luna-auth-email').value.trim();
       const pass = password.value;
       const name = auth.querySelector('#luna-auth-name').value.trim();
@@ -109,11 +124,12 @@
       if (mode === 'signup' && name.length < 2) return setError('Informe seu nome.');
       submit.disabled = true;
       try {
-        if (mode === 'signup') await runAdapter('signUp', { email, password: pass, name });
-        else await runAdapter('signIn', { email, password: pass });
-        hideAuth();
-      } catch (error) { setError(error?.message || 'Não foi possível concluir o acesso.'); }
-      finally { submit.disabled = false; }
+        if (mode === 'signup') await finishOnlineLogin('signUp', { email, password: pass, name });
+        else await finishOnlineLogin('signIn', { email, password: pass });
+      } catch (error) {
+        const message = error?.message || 'Não foi possível concluir o acesso.';
+        setError(message, /^Conta criada\./i.test(message));
+      } finally { submit.disabled = false; }
     });
   }
 
@@ -154,17 +170,39 @@
     });
   }
 
+  async function resolveStartupSession() {
+    try {
+      const adapter = window.LUNA_AUTH_ADAPTER;
+      if (adapter?.getSession) {
+        const session = await adapter.getSession();
+        if (session) {
+          localStorage.removeItem(SESSION_KEY);
+          hideAuth();
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // Existing local users see the new account screen once after this backend migration.
+    if (localStorage.getItem(SESSION_KEY) && localStorage.getItem(BACKEND_MIGRATION_KEY)) {
+      hideAuth();
+      return;
+    }
+    localStorage.setItem(BACKEND_MIGRATION_KEY, '1');
+    showAuth();
+  }
+
   function boot() {
     createSplash();
     createAuth();
     createDangerDialog();
     patchClearButton();
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const splash = document.getElementById('luna-splash');
       splash?.classList.add('is-leaving');
       setTimeout(() => splash?.remove(), 340);
-      if (!localStorage.getItem(SESSION_KEY)) showAuth();
+      await resolveStartupSession();
     }, 1450);
   }
 
