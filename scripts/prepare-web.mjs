@@ -17,16 +17,22 @@ await mkdir(new URL('../www/src/domain/', import.meta.url), { recursive: true })
 let html = await readFile(source, 'utf8');
 
 const styleTag = '<link rel="stylesheet" href="assets/luna-v2.css">';
+const authStyleTag = '<link rel="stylesheet" href="assets/auth-shell.css">';
 const engineTag = '<script src="src/domain/cycle-engine.js"></script>';
+const authTag = '<script src="assets/auth-shell.js"></script>';
 const upgradesTag = '<script src="assets/app-upgrades.js"></script>';
 const notificationsTag = '<script src="assets/native-notifications.js"></script>';
 
-if (!html.includes(styleTag)) html = html.replace('</head>', `  ${styleTag}\n</head>`);
+if (!html.includes(styleTag)) html = html.replace('</head>', `  ${styleTag}\n  ${authStyleTag}\n</head>`);
+else if (!html.includes(authStyleTag)) html = html.replace(styleTag, `${styleTag}\n  ${authStyleTag}`);
+
 if (!html.includes(engineTag)) {
   html = html.replace(
     '</body>',
-    `  ${engineTag}\n  ${upgradesTag}\n  ${notificationsTag}\n</body>`
+    `  ${engineTag}\n  ${authTag}\n  ${upgradesTag}\n  ${notificationsTag}\n</body>`
   );
+} else if (!html.includes(authTag)) {
+  html = html.replace(engineTag, `${engineTag}\n  ${authTag}`);
 }
 
 await writeFile(target, html, 'utf8');
@@ -45,4 +51,4 @@ await build({
   logLevel: 'info'
 });
 
-console.log('Luna v2 preparado com UI Android, cycle engine e notificações nativas.');
+console.log('Luna preparado com UI Android, splash, autenticação, cycle engine e notificações nativas.');
