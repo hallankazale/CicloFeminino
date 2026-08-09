@@ -5,9 +5,7 @@
   let syncTimer = null;
   let syncing = false;
 
-  function adapter() {
-    return window.LUNA_AUTH_ADAPTER;
-  }
+  function adapter() { return window.LUNA_AUTH_ADAPTER; }
 
   async function session() {
     const auth = adapter();
@@ -33,23 +31,19 @@
   }
 
   async function pushLocalData(userId) {
-    const auth = adapter();
-    const supabase = auth?.supabase;
+    const supabase = adapter()?.supabase;
     const data = currentData();
     if (!supabase || !data || !userId) return;
 
-    const name = String(data.name || '').trim() || null;
-    const lastPeriod = data.lastPeriod || null;
-
     const profileResult = await supabase.from('luna_profiles').upsert({
       user_id: userId,
-      display_name: name
+      display_name: String(data.name || '').trim() || null
     }, { onConflict: 'user_id' });
     if (profileResult.error) throw profileResult.error;
 
     const settingsResult = await supabase.from('luna_cycle_settings').upsert({
       user_id: userId,
-      last_period: lastPeriod,
+      last_period: data.lastPeriod || null,
       cycle_length: Number(data.cycleLen) || 28,
       period_length: Number(data.periodLen) || 5,
       notifications_enabled: localStorage.getItem('luna_notifications') === 'on'
@@ -71,6 +65,9 @@
     if (rows.length) {
       const logsResult = await supabase.from('luna_daily_logs').upsert(rows, { onConflict: 'user_id,log_date' });
       if (logsResult.error) throw logsResult.error;
+    } else {
+      const clearResult = await supabase.from('luna_daily_logs').delete().eq('user_id', userId);
+      if (clearResult.error) throw clearResult.error;
     }
   }
 
@@ -109,9 +106,7 @@
       if (typeof renderCalendar === 'function') renderCalendar();
       if (typeof renderHistorico === 'function') renderHistorico();
       if (typeof renderInsights === 'function') renderInsights();
-      if (window.LunaNotifications?.reschedule && settings.notifications_enabled) {
-        await window.LunaNotifications.reschedule(appData);
-      }
+      if (window.LunaNotifications?.reschedule && settings.notifications_enabled) await window.LunaNotifications.reschedule(appData);
     } catch (_) {}
     return true;
   }
@@ -128,9 +123,7 @@
     } catch (error) {
       console.warn('Luna cloud sync:', error?.message || error);
       if (typeof showToast === 'function') showToast('Conta conectada. Sincronização será tentada novamente.');
-    } finally {
-      syncing = false;
-    }
+    } finally { syncing = false; }
   }
 
   async function syncNow() {
