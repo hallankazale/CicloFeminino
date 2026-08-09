@@ -23,7 +23,7 @@ test('possui login, cadastro, Google e recuperação de senha', () => {
 
 test('modo local mantém o APK utilizável sem misturar backend de outro projeto', () => {
   assert.match(authJs, /luna_local_session/);
-  assert.match(authJs, /Continuar neste aparelho/);
+  assert.match(authJs, /Continuar sem conta neste aparelho/);
 });
 
 test('fluxo Limpar apaga somente registros e atualiza as telas', () => {
