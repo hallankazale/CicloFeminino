@@ -44,6 +44,13 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
+      - name: Apply Luna launcher icon
+        run: |
+          mkdir -p android/app/src/main/res/drawable-nodpi
+          base64 --decode assets/luna-icon.jpg.b64 > android/app/src/main/res/drawable-nodpi/luna_icon.jpg
+          sed -i 's#@mipmap/ic_launcher_round#@drawable/luna_icon#g' android/app/src/main/AndroidManifest.xml
+          sed -i 's#@mipmap/ic_launcher#@drawable/luna_icon#g' android/app/src/main/AndroidManifest.xml
+
       - name: Sync Capacitor
         run: npx cap sync android
 
