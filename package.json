@@ -1,6 +1,6 @@
 {
   "name": "luna-ciclo-feminino",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Luna — aplicativo de acompanhamento do ciclo feminino para Android.",
   "scripts": {
@@ -15,9 +15,10 @@
     "@capacitor/local-notifications": "8.0.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "8.4.2"
+    "@capacitor/cli": "8.4.2",
+    "esbuild": "0.25.9"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }
