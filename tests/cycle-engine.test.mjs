@@ -26,7 +26,10 @@ test('detecta início de menstruação por blocos de fluxo consecutivo', () => {
     '2026-06-29': { flow: 'moderado' },
     '2026-07-26': { flow: 'leve' }
   };
-  assert.deepEqual(engine.detectPeriodStarts(logs), ['2026-06-01', '2026-06-28', '2026-07-26']);
+  assert.deepEqual(
+    Array.from(engine.detectPeriodStarts(logs)),
+    ['2026-06-01', '2026-06-28', '2026-07-26']
+  );
 });
 
 test('usa mediana dos ciclos observados em vez de um único intervalo', () => {
