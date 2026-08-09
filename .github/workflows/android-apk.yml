@@ -46,10 +46,22 @@ jobs:
 
       - name: Apply Luna launcher icon
         run: |
-          mkdir -p android/app/src/main/res/drawable-nodpi
-          base64 --decode assets/luna-icon.jpg.b64 > android/app/src/main/res/drawable-nodpi/luna_icon.jpg
-          sed -i 's#@mipmap/ic_launcher_round#@drawable/luna_icon#g' android/app/src/main/AndroidManifest.xml
-          sed -i 's#@mipmap/ic_launcher#@drawable/luna_icon#g' android/app/src/main/AndroidManifest.xml
+          set -e
+          ICON=/tmp/luna_icon.jpg
+          base64 --decode assets/luna-icon.jpg.b64 > "$ICON"
+          test -s "$ICON"
+
+          RES=android/app/src/main/res
+          rm -f "$RES"/mipmap-anydpi-v26/ic_launcher.xml
+          rm -f "$RES"/mipmap-anydpi-v26/ic_launcher_round.xml
+
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            DIR="$RES/mipmap-$density"
+            mkdir -p "$DIR"
+            rm -f "$DIR/ic_launcher.webp" "$DIR/ic_launcher_round.webp" "$DIR/ic_launcher.png" "$DIR/ic_launcher_round.png" "$DIR/ic_launcher.jpg" "$DIR/ic_launcher_round.jpg"
+            cp "$ICON" "$DIR/ic_launcher.jpg"
+            cp "$ICON" "$DIR/ic_launcher_round.jpg"
+          done
 
       - name: Sync Capacitor
         run: npx cap sync android
